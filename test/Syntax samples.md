@@ -16,9 +16,10 @@ It has a little text explanation
 fenced.code.block();
 ```
 
-### A keyword where the `parameter, a number` is typed
+### A keyword where the `parameter, a number,` is typed
 - This time implemented as an unordered list
 - One more step
+  - This one has a substep
 - One more step
 
 ---

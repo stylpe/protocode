@@ -24,24 +24,24 @@ console.dir(reporter(file));
 
 type Commentary = Exclude<MD.RootContent, MD.Heading | MD.List>;
 
-type Content = Section | Commentary;
+type Content = SubSection | Commentary;
 
 interface TextFrom<T extends MD.RootContent> extends U.Literal {
-  src: T;
+  //src: T;
 }
 
-interface Root extends U.Parent {
+interface RootSection extends U.Parent {
   type: 'root';
   level: 0;
   children: Content[];
 }
-interface Section extends U.Parent {
+interface SubSection extends U.Parent {
   type: 'section';
   name: Name;
   level: MD.Heading['depth'];
   children: Content[];
 }
-type Parent = Root | Section;
+type Section = RootSection | SubSection;
 interface Name extends TextFrom<MD.Heading> {
   type: 'name';
 }
@@ -49,36 +49,41 @@ interface Name extends TextFrom<MD.Heading> {
 function toName(heading: MD.Heading): Name {
   return {
     type: 'name',
-    src: heading,
+    //src: heading,
     value: toString(heading),
     position: heading.position,
   };
 }
 
 function scan(mdroot: MD.Root) {
-  const root: Root = { type: 'root', level: 0, children: [] };
-  const stack: Section[] = [];
-  const current = (): Parent => stack.at(-1) ?? root;
+  const root: RootSection = { type: 'root', level: 0, children: [], position: mdroot.position };
+  let current: Section = root;
+  const lineage: SubSection[] = [];
+  function push(ss:SubSection) {
+    current.children.push(ss);
+    current = ss;
+    lineage.push(ss);
+  }
   function popLevel(level: MD.Heading['depth']) {
-    while (stack.length != 0 && current().level >= level) {
-      const section = stack.pop();
+    while (current.level >= level) {
+      current = lineage.pop() || root;
     }
   }
   for (const it of mdroot.children) {
     if (it.type === 'heading') {
       popLevel(it.depth);
-      const next: Section = {
+      const subsection: SubSection = {
         type: 'section',
         name: toName(it),
         level: it.depth,
         children: [],
       };
-      current().children.push(next);
-      stack.push(next);
+      push(subsection);
     } else if (it.type === 'list') {
+      current.children.push(...it.children);
     } else {
       if (it.type === 'thematicBreak') popLevel(3);
-      current().children.push(it);
+      current.children.push(it);
     }
   }
   return root;
