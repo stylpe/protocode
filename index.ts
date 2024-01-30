@@ -57,6 +57,8 @@ function toName(heading: MD.Heading): Name {
 
 function scan(mdroot: MD.Root) {
   const root: RootSection = { type: 'root', level: 0, children: [], position: mdroot.position };
+
+  // A specialized stack mini-API
   let current: Section = root;
   const lineage: SubSection[] = [];
   function push(ss:SubSection) {
@@ -69,7 +71,9 @@ function scan(mdroot: MD.Root) {
       current = lineage.pop() || root;
     }
   }
+
   for (const it of mdroot.children) {
+    if (it.type === 'listItem') throw TypeError("How is there a listItem directly in the root content and not in a list?!?")
     if (it.type === 'heading') {
       popLevel(it.depth);
       const subsection: SubSection = {
